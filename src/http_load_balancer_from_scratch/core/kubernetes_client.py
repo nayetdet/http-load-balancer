@@ -12,7 +12,7 @@ class KubernetesClient:
     def routes(cls) -> list[RouteSchema]:
         pods = cls.__core.list_namespaced_pod(
             name=settings.KUBERNETES_DEPLOYMENT_NAME,
-            label_selector=f"app={settings.KUBERNETES_APP_LABEL}"
+            label_selector=f"app={settings.KUBERNETES_DEPLOYMENT_APP_NAME}"
         )
 
         routes: list[RouteSchema] = []

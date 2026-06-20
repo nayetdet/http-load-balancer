@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     # Kubernetes
     KUBERNETES_DEPLOYMENT_NAME: str
+    KUBERNETES_DEPLOYMENT_APP_NAME: str
     KUBERNETES_NAMESPACE: str = "default"
 
 settings = Settings()
