@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from http_load_balancer_from_scratch.enums.algorithm_strategy import AlgorithmStrategy
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -6,6 +7,9 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore"
     )
+
+    # Algorithms
+    ALGORITHM: AlgorithmStrategy = AlgorithmStrategy.ROUND_ROBIN
 
     # Kubernetes
     KUBERNETES_DEPLOYMENT_NAME: str

@@ -8,20 +8,20 @@ class WeightedRoundRobinAlgorithm(BaseAlgorithm):
     _sequence: list[TargetSchema] = []
 
     @classmethod
-    def next_route(cls, connection: ConnectionSchema) -> TargetSchema:
-        routes: list[TargetSchema] = cls.routes()
-        signature: tuple[str, ...] = tuple(f"{route.key()}#{route.weight}" for route in routes)
+    def next_target(cls, connection: ConnectionSchema) -> TargetSchema:
+        targets: list[TargetSchema] = cls.targets()
+        signature: tuple[str, ...] = tuple(f"{target.key()}#{target.weight}" for target in targets)
 
         if signature != cls._sequence_signature:
             cls._sequence_signature = signature
-            weighted_routes: list[TargetSchema] = []
-            for route in routes:
-                weighted_routes.extend([route] * max(1, route.weight))
+            weighted_targets: list[TargetSchema] = []
+            for target in targets:
+                weighted_targets.extend([target] * max(1, target.weight))
 
-            cls._sequence = weighted_routes or routes
+            cls._sequence = weighted_targets or targets
             cls._index = 0
 
-        sequence: list[TargetSchema] = cls._sequence or routes
+        sequence: list[TargetSchema] = cls._sequence or targets
         index: int = cls._index % len(sequence)
         cls._index = (index + 1) % len(sequence)
         return sequence[index]

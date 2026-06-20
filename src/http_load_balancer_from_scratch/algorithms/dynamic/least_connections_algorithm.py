@@ -4,9 +4,9 @@ from http_load_balancer_from_scratch.schemas.target_schema import TargetSchema
 
 class LeastConnectionsAlgorithm(BaseAlgorithm):
     @classmethod
-    def next_route(cls, _: ConnectionSchema) -> TargetSchema:
-        routes: list[TargetSchema] = cls.routes()
+    def next_target(cls, _: ConnectionSchema) -> TargetSchema:
+        targets: list[TargetSchema] = cls.targets()
         return min(
-            enumerate(routes),
-            key=lambda item: (item[1].stats.connections, item[0])
+            enumerate(targets),
+            key=lambda item: (cls.target_stats(item[1].key()).connections, item[0])
         )[1]
