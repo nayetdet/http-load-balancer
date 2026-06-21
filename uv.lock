@@ -7,6 +7,12 @@ resolution-markers = [
     "sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
+[manifest]
+members = [
+    "http-load-balancer",
+    "http-load-balancer-base",
+]
+
 [[package]]
 name = "aiohappyeyeballs"
 version = "2.6.2"
@@ -214,9 +220,9 @@ wheels = [
 ]
 
 [[package]]
-name = "http-load-balancer-from-scratch"
+name = "http-load-balancer"
 version = "1.0.0"
-source = { editable = "." }
+source = { editable = "packages/http_load_balancer" }
 dependencies = [
     { name = "kubernetes" },
     { name = "loguru" },
@@ -231,6 +237,11 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "pydantic-settings", specifier = ">=2.14.2" },
 ]
+
+[[package]]
+name = "http-load-balancer-base"
+version = "1.0.0"
+source = { virtual = "." }
 
 [[package]]
 name = "idna"

@@ -4,9 +4,9 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from http_load_balancer_from_scratch.algorithms.base_algorithm import BaseAlgorithm
+    from http_load_balancer.algorithms.base_algorithm import BaseAlgorithm
 
-from http_load_balancer_from_scratch.algorithms import (
+from http_load_balancer.algorithms import (
     IPHashAlgorithm,
     LeastConnectionsAlgorithm,
     LeastResponseTimeAlgorithm,

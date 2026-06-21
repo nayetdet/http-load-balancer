@@ -1,7 +1,7 @@
 from kubernetes import client, config
 from kubernetes.config.config_exception import ConfigException
-from http_load_balancer_from_scratch.schemas.target_schema import TargetSchema
-from http_load_balancer_from_scratch.settings import settings
+from http_load_balancer.schemas.target_schema import TargetSchema
+from http_load_balancer.settings import settings
 
 try:
     config.load_incluster_config()

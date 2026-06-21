@@ -1,6 +1,6 @@
-from http_load_balancer_from_scratch.algorithms.base_algorithm import BaseAlgorithm
-from http_load_balancer_from_scratch.schemas.connection_schema import ConnectionSchema
-from http_load_balancer_from_scratch.schemas.target_schema import TargetSchema
+from http_load_balancer.algorithms.base_algorithm import BaseAlgorithm
+from http_load_balancer.schemas.connection_schema import ConnectionSchema
+from http_load_balancer.schemas.target_schema import TargetSchema
 
 class WeightedRoundRobinAlgorithm(BaseAlgorithm):
     _index: int = 0

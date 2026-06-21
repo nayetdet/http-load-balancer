@@ -1,6 +1,6 @@
 from collections import defaultdict
 from threading import Lock
-from http_load_balancer_from_scratch.schemas.target_stats_schema import TargetStatsSchema
+from http_load_balancer.schemas.target_stats_schema import TargetStatsSchema
 
 class TargetManager:
     _lock = Lock()

@@ -2,11 +2,11 @@ import socket
 import time
 import threading
 from loguru import logger
-from http_load_balancer_from_scratch.algorithms.base_algorithm import BaseAlgorithm
-from http_load_balancer_from_scratch.core.target_manager import TargetManager
-from http_load_balancer_from_scratch.schemas.connection_schema import ConnectionSchema
-from http_load_balancer_from_scratch.schemas.target_schema import TargetSchema
-from http_load_balancer_from_scratch.settings import settings
+from http_load_balancer.algorithms.base_algorithm import BaseAlgorithm
+from http_load_balancer.core.target_manager import TargetManager
+from http_load_balancer.schemas.connection_schema import ConnectionSchema
+from http_load_balancer.schemas.target_schema import TargetSchema
+from http_load_balancer.settings import settings
 
 HOST = "127.0.0.1"
 PORT = 8080

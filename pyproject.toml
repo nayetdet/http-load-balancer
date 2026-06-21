@@ -1,15 +1,13 @@
 [project]
-name = "http-load-balancer-from-scratch"
+name = "http-load-balancer-base"
 version = "1.0.0"
 description = ""
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = [
-    "kubernetes>=36.0.2",
-    "loguru>=0.7.3",
-    "pydantic>=2.13.4",
-    "pydantic-settings>=2.14.2",
-]
+dependencies = []
 
-[tool.uv]
-package = true
+[tool.uv.workspace]
+members = ["packages/http_load_balancer"]
+
+[tool.uv.sources]
+http_load_balancer = { workspace = true }

@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from http_load_balancer_from_scratch.enums.algorithm_strategy import AlgorithmStrategy
+from http_load_balancer.enums.algorithm_strategy import AlgorithmStrategy
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(

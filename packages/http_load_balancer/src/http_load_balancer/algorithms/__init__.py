@@ -1,9 +1,9 @@
-from http_load_balancer_from_scratch.algorithms.dynamic import (
+from http_load_balancer.algorithms.dynamic import (
     LeastConnectionsAlgorithm,
     LeastResponseTimeAlgorithm
 )
 
-from http_load_balancer_from_scratch.algorithms.static import (
+from http_load_balancer.algorithms.static import (
     IPHashAlgorithm,
     RoundRobinAlgorithm,
     StickyRoundRobinAlgorithm,
