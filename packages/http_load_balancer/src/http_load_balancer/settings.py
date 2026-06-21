@@ -11,9 +11,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # Load Balancer
-    host: str = "127.0.0.1"
-    port: int = 8080
+    # Servers
+    proxy_host: str = "127.0.0.1"
+    proxy_port: int = 8080
     buffer_size: int = 4096
     backlog: int = 128
 
