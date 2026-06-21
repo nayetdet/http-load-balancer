@@ -1,6 +1,6 @@
 # Build Stage
 FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim AS builder
-ARG PACKAGE=http_loader_balancer
+ARG PACKAGE=http_load_balancer
 ENV UV_NO_DEV=1 \
     UV_PYTHON_DOWNLOADS=0 \
     UV_COMPILE_BYTECODE=1 \
@@ -20,12 +20,12 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Runtime Stage
 FROM python:3.14-slim-trixie
-ARG PACKAGE=http_loader_balancer
+ARG PACKAGE=http_load_balancer
 ENV PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/packages/"$PACKAGE"/src /app/packages/"$PACKAGE"/src
 
-EXPOSE 3000
+EXPOSE 8080
 CMD ["python", "-m", "http_load_balancer"]

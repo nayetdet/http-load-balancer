@@ -24,8 +24,7 @@ def forward_request(client_socket: socket.socket, algorithm) -> None:
         with _selection_lock:
             connection: ConnectionSchema = client_connection(client_socket)
             target: TargetSchema = algorithm.next_target(connection)
-            target_key = target.key()
-            TargetStatsManager.increment_connections(target_key)
+            TargetStatsManager.increment_connections(target.key)
 
         started_at: float = time.perf_counter()
         logger.info("Forwarding request to {}:{} via {}", target.ip, target.port, algorithm.__name__)
@@ -40,16 +39,14 @@ def forward_request(client_socket: socket.socket, algorithm) -> None:
                     client_socket.sendall(response)
             except OSError:
                 logger.exception("Failed to forward request to {}:{}", target.ip, target.port)
-                try: client_socket.sendall(b"HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                try:
+                    client_socket.sendall(b"HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
                 except OSError:
                     pass
             else:
-                TargetStatsManager.update_response_time(
-                    target_key=target_key,
-                    response_time=time.perf_counter() - started_at,
-                )
+                TargetStatsManager.update_response_time(target_key=target.key, response_time=time.perf_counter() - started_at)
             finally:
-                TargetStatsManager.decrement_connections(target_key)
+                TargetStatsManager.decrement_connections(target.key)
 
 def main() -> None:
     TargetManager.reload()
