@@ -4,13 +4,16 @@ import socket
 import threading
 import time
 from loguru import logger
-from http_load_balancer.servers.base_server import BaseServer, server_handler
+from http import HTTPStatus
+from http_load_balancer.servers.base_server import BaseServer
+from http_load_balancer.servers.handlers.http_handler import http_handler
 from http_load_balancer.algorithms.base_algorithm import BaseAlgorithm
 from http_load_balancer.core.target_manager import TargetManager
 from http_load_balancer.core.target_stats_manager import TargetStatsManager
 from http_load_balancer.schemas.connection_schema import ConnectionSchema
 from http_load_balancer.schemas.target_schema import TargetSchema
 from http_load_balancer.settings import settings
+from http_load_balancer.utils.http_utils import HTTPUtils
 
 _selection_lock = threading.Lock()
 
@@ -29,8 +32,8 @@ class ProxyServer(BaseServer):
             buffer_size=buffer_size
         )
 
-    @server_handler
-    def handle_proxy_request(self, client_socket: socket.socket, request: bytes) -> bool:
+    @http_handler()
+    def handle_proxy_request(self, client_socket: socket.socket, request: bytes) -> None:
         with _selection_lock:
             algorithm: type[BaseAlgorithm] = TargetManager.algorithm()
             connection: ConnectionSchema = ConnectionSchema.model_validate(dict(zip(ConnectionSchema.model_fields, client_socket.getpeername())))
@@ -52,12 +55,10 @@ class ProxyServer(BaseServer):
             except OSError:
                 logger.exception("Failed to forward request to {}:{}", target.ip, target.port)
                 try:
-                    client_socket.sendall(b"HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                    client_socket.sendall(HTTPUtils.build_empty_response(HTTPStatus.BAD_GATEWAY))
                 except OSError:
                     pass
             else:
                 TargetStatsManager.update_response_time(target_key=target.key(), response_time=time.perf_counter() - started_at,)
             finally:
                 TargetStatsManager.decrement_connections(target.key())
-
-        return True

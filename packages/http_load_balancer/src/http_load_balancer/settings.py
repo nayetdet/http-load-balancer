@@ -8,12 +8,14 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         env_prefix="LB_",
-        extra="ignore",
+        extra="ignore"
     )
 
     # Servers
     proxy_host: str = "127.0.0.1"
     proxy_port: int = 8080
+    internal_host: str = "127.0.0.1"
+    internal_port: int = 9090
     buffer_size: int = 4096
     backlog: int = 128
 
