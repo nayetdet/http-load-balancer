@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dummy
+  name: sample-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dummy
+      app: sample-app
   template:
     metadata:
       labels:
-        app: dummy
+        app: sample-app
     spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       containers:
-        - name: dummy
-          image: nginx:latest
+        - name: sample-app
+          image: ghcr.io/nayetdet/http-load-balancer:sample-app
           ports:
-            - containerPort: 80
+            - containerPort: 3000

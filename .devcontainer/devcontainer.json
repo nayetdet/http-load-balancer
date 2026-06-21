@@ -5,7 +5,7 @@
 
   "mounts": [
     "source=${localEnv:HOME}/.codex,target=/home/vscode/.codex,type=bind",
-    "source=${localEnv:HOME}/.kube,target=/home/vscode/.kube,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.kube,target=/home/vscode/.kube,type=bind"
   ],
 
   "runArgs": [

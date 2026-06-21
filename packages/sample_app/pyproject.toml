@@ -1,5 +1,5 @@
 [project]
-name = "sample-app"
+name = "sample_app"
 version = "1.0.0"
 description = ""
 readme = "README.md"

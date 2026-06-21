@@ -1,5 +1,6 @@
 # Build Stage
 FROM ghcr.io/astral-sh/uv:python3.14-trixie-slim AS builder
+ARG PACKAGE=sample_app
 ENV UV_NO_DEV=1 \
     UV_PYTHON_DOWNLOADS=0 \
     UV_COMPILE_BYTECODE=1 \
@@ -9,19 +10,23 @@ WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project
+    uv sync --frozen --no-install-project --no-install-workspace
 
-COPY . .
+COPY packages/"$PACKAGE" /app/packages/"$PACKAGE"
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --package="$PACKAGE"
 
 # Runtime Stage
 FROM python:3.14-slim-trixie
-ENV PYTHONUNBUFFERED=1 \
-    PATH="/app/.venv/bin:$PATH"
+ARG PACKAGE=sample_app
+ENV PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
-COPY --from=builder /app .
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/packages/"$PACKAGE"/src /app/packages/"$PACKAGE"/src
+COPY --from=builder /app/packages/"$PACKAGE"/resources /app/packages/"$PACKAGE"/resources
 
 EXPOSE 3000
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:3000", "main:app"]
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:3000", "sample_app.main:app"]
