@@ -29,4 +29,4 @@ COPY --from=builder /app/packages/"$PACKAGE"/src /app/packages/"$PACKAGE"/src
 COPY --from=builder /app/packages/"$PACKAGE"/resources /app/packages/"$PACKAGE"/resources
 
 EXPOSE 3000
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:3000", "sample_app.main:app"]
+CMD ["gunicorn", "--preload", "-w", "2", "-b", "0.0.0.0:3000", "sample_app.main:app"]

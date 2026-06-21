@@ -1,7 +1,5 @@
-import secrets
-import uuid
-from datetime import UTC, datetime
 from flask import Flask, render_template
+from sample_app.runtime import instance_id, background_color, started_at
 from sample_app.settings import settings
 
 app = Flask(__name__, template_folder=str(settings.TEMPLATES_PATH))
@@ -10,9 +8,9 @@ app = Flask(__name__, template_folder=str(settings.TEMPLATES_PATH))
 def index():
     return render_template(
         "index.html",
-        uuid=str(uuid.uuid4()),
-        color=f"#{secrets.token_hex(nbytes=3)}",
-        started_at=datetime.now(UTC).astimezone().strftime(format="%d/%m/%Y %H:%M:%S")
+        instance_id=str(instance_id),
+        background_color=background_color,
+        started_at=started_at.astimezone().strftime(format="%d/%m/%Y %H:%M:%S")
     )
 
 def main():

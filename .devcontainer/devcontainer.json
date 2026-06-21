@@ -9,6 +9,7 @@
   ],
 
   "runArgs": [
+    "--network=host",
     "--security-opt=label=disable"
   ],
 

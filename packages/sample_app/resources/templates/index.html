@@ -4,7 +4,7 @@
     <title>Flask Demo</title>
     <style>
       body {
-          background-color: {{ color }};
+          background-color: {{ background_color }};
           margin: 0;
           min-height: 100vh;
           display: flex;
@@ -23,7 +23,7 @@
   <body>
     <div class="card">
       <h1>Instance Information</h1>
-      <p><strong>UUID:</strong> {{ uuid }}</p>
+      <p><strong>UUID:</strong> {{ instance_id }}</p>
       <p>
         <strong>Started At:</strong>
         {{ started_at }}
