@@ -35,9 +35,22 @@ class ProxyServer(BaseServer):
     @http_handler()
     def handle_proxy_request(self, client_socket: socket.socket, request: bytes) -> None:
         with _selection_lock:
+            targets: list[TargetSchema] = list(TargetManager.targets())
+            if not targets:
+                logger.warning("No targets available; returning 503")
+                client_socket.sendall(HTTPUtils.empty_response(HTTPStatus.SERVICE_UNAVAILABLE))
+                return
+
             algorithm: type[BaseAlgorithm] = TargetManager.algorithm()
             connection: ConnectionSchema = ConnectionSchema.model_validate(dict(zip(ConnectionSchema.model_fields, client_socket.getpeername())))
-            target: TargetSchema = algorithm.next_target(connection)
+
+            try:
+                target: TargetSchema = algorithm.next_target(connection)
+            except (ValueError, ZeroDivisionError):
+                logger.warning("Target selection failed because no targets were available")
+                client_socket.sendall(HTTPUtils.empty_response(HTTPStatus.SERVICE_UNAVAILABLE))
+                return
+
             TargetStatsManager.increment_connections(target.key())
 
         started_at: float = time.perf_counter()
@@ -55,7 +68,7 @@ class ProxyServer(BaseServer):
             except OSError:
                 logger.exception("Failed to forward request to {}:{}", target.ip, target.port)
                 try:
-                    client_socket.sendall(HTTPUtils.build_empty_response(HTTPStatus.BAD_GATEWAY))
+                    client_socket.sendall(HTTPUtils.empty_response(HTTPStatus.BAD_GATEWAY))
                 except OSError:
                     pass
             else:

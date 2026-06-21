@@ -18,8 +18,6 @@ class DockerProvider(BaseProvider):
         finally:
             if client is not None:
                 client.close()
-        if not targets:
-            raise RuntimeError("No available targets")
         return targets
 
     @classmethod

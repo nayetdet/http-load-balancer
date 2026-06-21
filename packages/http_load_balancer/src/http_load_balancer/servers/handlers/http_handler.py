@@ -33,7 +33,7 @@ def http_handler(
 
             fn(self, client_socket, request)
             if normalized_status is not None:
-                response: bytes = HTTPUtils.build_empty_response(normalized_status)
+                response: bytes = HTTPUtils.empty_response(normalized_status)
                 client_socket.sendall(response)
 
             return True

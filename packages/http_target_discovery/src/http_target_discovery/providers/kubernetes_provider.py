@@ -45,9 +45,6 @@ class KubernetesProvider(BaseProvider):
         targets: set[TargetSchema] = set()
         targets.update(cls._internal_targets(running_pods))
         targets.update(cls._published_targets(running_pods))
-
-        if not targets:
-            raise RuntimeError("No available targets")
         return targets
 
     @classmethod

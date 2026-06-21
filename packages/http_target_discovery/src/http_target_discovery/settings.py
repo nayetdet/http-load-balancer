@@ -7,12 +7,17 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         env_prefix="DISCOVERY_",
-        extra="ignore",
+        extra="ignore"
     )
 
     # Discovery
     provider_strategy: DiscoveryProviderStrategy = DiscoveryProviderStrategy.DOCKER
-    target_network_strategy: DiscoveryTargetNetworkStrategy = DiscoveryTargetNetworkStrategy.BOTH
+    target_network_strategy: DiscoveryTargetNetworkStrategy = DiscoveryTargetNetworkStrategy.PUBLISHED
+    poll_interval_seconds: float = 15
+    request_timeout_seconds: float = 5
+
+    # Load Balancer
+    lb_reload_url: str
 
     # Docker
     docker_target_label: str = "http-load-balancer.target"

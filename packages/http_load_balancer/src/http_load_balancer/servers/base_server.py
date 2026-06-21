@@ -4,6 +4,7 @@ import socket
 import threading
 from http_load_balancer.settings import settings
 from http_load_balancer.servers.handlers.handler import Handler
+from http_load_balancer.utils.http_utils import HTTPUtils
 
 class BaseServer:
     def __init__(
@@ -52,10 +53,30 @@ class BaseServer:
 
     def _handle_connection(self, client_socket: socket.socket) -> None:
         with client_socket:
-            request = client_socket.recv(self._buffer_size)
-            if not request:
+            request_buffer: bytearray = bytearray()
+            content_length: int = 0
+            header_end: int = -1
+
+            while True:
+                chunk: bytes = client_socket.recv(self._buffer_size)
+                if not chunk:
+                    return
+
+                request_buffer.extend(chunk)
+                if header_end < 0:
+                    header_end = HTTPUtils.headers_end(bytes(request_buffer))
+                    if header_end >= 0:
+                        content_length = HTTPUtils.content_length(bytes(request_buffer[:header_end]))
+
+                if header_end < 0 or len(request_buffer) < header_end + 4 + content_length:
+                    continue
+
+                break
+
+            if not request_buffer:
                 return
 
+            request: bytes = bytes(request_buffer)
             for handler in self._handlers:
                 if handler(client_socket, request):
                     return

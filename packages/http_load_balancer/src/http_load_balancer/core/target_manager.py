@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import yaml
 from threading import Lock
 from typing import TYPE_CHECKING
@@ -9,6 +11,7 @@ from http_load_balancer.settings import settings
 
 if TYPE_CHECKING:
     from http_load_balancer.enums.algorithm_strategy import AlgorithmStrategy
+    from http_load_balancer.schemas.target_settings_schema import TargetSettingsSchema
 
 class TargetManager:
     _lock = Lock()
@@ -28,16 +31,22 @@ class TargetManager:
             return cls._algorithm_strategy.algorithm
 
     @classmethod
-    def reload(cls, *_: object) -> None:
+    def reload(cls, payload: TargetSettingsSchema | None = None) -> None:
         try:
-            from http_load_balancer.schemas.target_settings_schema import TargetSettingsSchema
-            target_settings: TargetSettingsSchema = TargetSettingsSchema.model_validate(yaml.safe_load(settings.settings_file_path.read_text(encoding="utf-8")) or {})
-            targets: set[TargetSchema] = {target.model_copy(deep=True) for target in target_settings.targets}
+            if payload is None:
+                from http_load_balancer.schemas.target_settings_schema import TargetSettingsSchema
+                target_settings: TargetSettingsSchema = TargetSettingsSchema.model_validate(yaml.safe_load(settings.settings_file_path.read_text(encoding="utf-8")) or {})
+                targets: set[TargetSchema] = {target.model_copy(deep=True) for target in target_settings.targets}
+                algorithm_strategy = target_settings.algorithm_strategy
+            else:
+                targets = {target.model_copy(deep=True) for target in payload.targets}
+                algorithm_strategy = None
+
             with cls._lock:
                 cls._targets = {target.model_copy(deep=True) for target in targets}
-                cls._algorithm_strategy = target_settings.algorithm_strategy
+                cls._algorithm_strategy = algorithm_strategy
                 TargetStatsManager.reload()
         except Exception:
-            logger.exception("Failed to reload target settings from {}", settings.settings_file_path)
+            logger.exception("Failed to reload target settings payload")
         else:
-            logger.info("Target settings reloaded from {}", settings.settings_file_path)
+            logger.info("Target settings payload reloaded")
