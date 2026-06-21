@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from http_target_discovery.enums.discovery_provider_strategy import DiscoveryProviderStrategy
+from http_target_discovery.enums.discovery_target_network_strategy import DiscoveryTargetNetworkStrategy
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -7,6 +9,10 @@ class Settings(BaseSettings):
         env_prefix="DISCOVERY_",
         extra="ignore",
     )
+
+    # Discovery
+    provider_strategy: DiscoveryProviderStrategy = DiscoveryProviderStrategy.DOCKER
+    target_network_strategy: DiscoveryTargetNetworkStrategy = DiscoveryTargetNetworkStrategy.BOTH
 
     # Docker
     docker_target_label: str = "http-load-balancer.target"

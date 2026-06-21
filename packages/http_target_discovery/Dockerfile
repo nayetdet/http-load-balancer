@@ -28,4 +28,4 @@ COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/packages/"$PACKAGE"/src /app/packages/"$PACKAGE"/src
 
 EXPOSE 8080
-CMD ["python", "-m", "http_load_balancer"]
+CMD ["python", "-m", "http_target_discovery"]

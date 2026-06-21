@@ -1,8 +1,8 @@
 from docker import DockerClient, from_env
 from docker.errors import DockerException
+from http_target_discovery.enums.discovery_target_network_strategy import DiscoveryTargetNetworkStrategy
 from http_target_discovery.providers.base_provider import BaseProvider
 from http_target_discovery.schemas.target_schema import TargetSchema
-from http_target_discovery.settings import settings
 
 class DockerProvider(BaseProvider):
     @classmethod
@@ -22,6 +22,11 @@ class DockerProvider(BaseProvider):
 
     @classmethod
     def _published_targets(cls, client: DockerClient) -> list[TargetSchema]:
+        from http_target_discovery.settings import settings
+
+        if settings.target_network_strategy is DiscoveryTargetNetworkStrategy.INTERNAL:
+            return []
+
         targets: list[TargetSchema] = []
         for container in client.containers.list(filters={"label": settings.docker_target_label}):
             for port_bindings in (container.attrs.get("NetworkSettings", {}).get("Ports") or {}).values():
@@ -47,6 +52,11 @@ class DockerProvider(BaseProvider):
 
     @classmethod
     def _internal_targets(cls, client: DockerClient) -> list[TargetSchema]:
+        from http_target_discovery.settings import settings
+
+        if settings.target_network_strategy is DiscoveryTargetNetworkStrategy.PUBLISHED:
+            return []
+
         targets: list[TargetSchema] = []
         for container in client.containers.list(filters={"label": settings.docker_target_label}):
             internal_ip: str | None = next(

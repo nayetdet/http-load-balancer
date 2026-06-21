@@ -2,7 +2,6 @@ from kubernetes import client, config
 from kubernetes.config.config_exception import ConfigException
 from http_target_discovery.providers.base_provider import BaseProvider
 from http_target_discovery.schemas.target_schema import TargetSchema
-from http_target_discovery.settings import settings
 
 try:
     config.load_incluster_config()
@@ -14,6 +13,8 @@ class KubernetesProvider(BaseProvider):
 
     @classmethod
     def targets(cls) -> list[TargetSchema]:
+        from http_target_discovery.settings import settings
+
         pods = cls._core.list_namespaced_pod(
             namespace=settings.kubernetes_namespace,
             label_selector=f"app={settings.kubernetes_deployment_app_name}"
