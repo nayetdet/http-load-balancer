@@ -9,9 +9,11 @@ dependencies = []
 [tool.uv.workspace]
 members = [
     "packages/http_load_balancer",
+    "packages/http_target_discovery",
     "packages/sample_app",
 ]
 
 [tool.uv.sources]
 http_load_balancer = { workspace = true }
+http_target_discovery = { workspace = true }
 sample_app = { workspace = true }

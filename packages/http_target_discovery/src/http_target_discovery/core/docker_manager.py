@@ -1,0 +1,2 @@
+class DockerManager:
+    pass
