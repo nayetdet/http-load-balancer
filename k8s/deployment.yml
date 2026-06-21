@@ -12,8 +12,6 @@ spec:
       labels:
         app: sample-app
     spec:
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: sample-app
           image: ghcr.io/nayetdet/http-load-balancer:sample-app

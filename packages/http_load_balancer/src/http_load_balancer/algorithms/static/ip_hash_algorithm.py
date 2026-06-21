@@ -1,7 +1,6 @@
 import hashlib
 from http_load_balancer.algorithms.base_algorithm import BaseAlgorithm
-from http_load_balancer.schemas.connection_schema import ConnectionSchema
-from http_load_balancer.schemas.target_schema import TargetSchema
+from http_load_balancer.schemas import ConnectionSchema, TargetSchema
 
 class IPHashAlgorithm(BaseAlgorithm):
     @classmethod

@@ -1,19 +1,18 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from http_load_balancer.enums.algorithm_strategy import AlgorithmStrategy
+from http_load_balancer.enums import AlgorithmStrategy
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        env_prefix="LB_",
         extra="ignore"
     )
 
-    # Algorithms
+    HOST: str = "127.0.0.1"
+    PORT: int = 8080
+    BUFFER_SIZE: int = 4096
+    BACKLOG: int = 128
     ALGORITHM: AlgorithmStrategy = AlgorithmStrategy.ROUND_ROBIN
-
-    # Kubernetes
-    KUBERNETES_DEPLOYMENT_NAME: str
-    KUBERNETES_DEPLOYMENT_APP_NAME: str
-    KUBERNETES_NAMESPACE: str = "default"
 
 settings = Settings()

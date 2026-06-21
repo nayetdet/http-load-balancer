@@ -3,14 +3,9 @@ import time
 import threading
 from loguru import logger
 from http_load_balancer.algorithms.base_algorithm import BaseAlgorithm
-from http_load_balancer.core.target_manager import TargetManager
-from http_load_balancer.schemas.connection_schema import ConnectionSchema
-from http_load_balancer.schemas.target_schema import TargetSchema
+from http_load_balancer.core import TargetStatsManager
+from http_load_balancer.schemas import ConnectionSchema, TargetSchema
 from http_load_balancer.settings import settings
-
-HOST = "127.0.0.1"
-PORT = 8080
-BUFFER_SIZE = 4096
 
 _selection_lock = threading.Lock()
 
@@ -20,7 +15,7 @@ def client_connection(client_socket: socket.socket) -> ConnectionSchema:
 
 def forward_request(client_socket: socket.socket, algorithm: type[BaseAlgorithm]) -> None:
     with client_socket:
-        request = client_socket.recv(BUFFER_SIZE)
+        request = client_socket.recv(settings.BUFFER_SIZE)
         if not request:
             return
 
@@ -28,7 +23,7 @@ def forward_request(client_socket: socket.socket, algorithm: type[BaseAlgorithm]
             connection: ConnectionSchema = client_connection(client_socket)
             target: TargetSchema = algorithm.next_target(connection)
             target_key = target.key()
-            TargetManager.increment_connections(target_key)
+            TargetStatsManager.increment_connections(target_key)
 
         started_at: float = time.perf_counter()
         logger.info("Repassando requisição para {}:{} via {}", target.ip, target.port, algorithm.__name__)
@@ -37,7 +32,7 @@ def forward_request(client_socket: socket.socket, algorithm: type[BaseAlgorithm]
                 remote_socket.connect((target.ip, target.port))
                 remote_socket.sendall(request)
                 while True:
-                    response = remote_socket.recv(BUFFER_SIZE)
+                    response = remote_socket.recv(settings.BUFFER_SIZE)
                     if not response:
                         break
                     client_socket.sendall(response)
@@ -47,22 +42,22 @@ def forward_request(client_socket: socket.socket, algorithm: type[BaseAlgorithm]
                 except OSError:
                     pass
             else:
-                TargetManager.update_response_time(
+                TargetStatsManager.update_response_time(
                     target_key=target_key,
                     response_time=time.perf_counter() - started_at,
                 )
             finally:
-                TargetManager.decrement_connections(target_key)
+                TargetStatsManager.decrement_connections(target_key)
 
 def main() -> None:
     algorithm: type[BaseAlgorithm] = settings.ALGORITHM.algorithm
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server.bind((HOST, PORT))
-    server.listen(10)
+    server.bind((settings.HOST, settings.PORT))
+    server.listen(settings.BACKLOG)
 
-    logger.info("Proxy rodando em {}:{} com {}", HOST, PORT, algorithm.__name__)
+    logger.info("Proxy rodando em {}:{} com {}", settings.HOST, settings.PORT, algorithm.__name__)
     while True:
         client_socket, _ = server.accept()
         threading.Thread(

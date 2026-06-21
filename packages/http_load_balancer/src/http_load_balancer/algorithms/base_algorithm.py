@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
-from http_load_balancer.core.target_manager import TargetManager
-from http_load_balancer.schemas.connection_schema import ConnectionSchema
-from http_load_balancer.schemas.target_stats_schema import TargetStatsSchema
-from http_load_balancer.schemas.target_schema import TargetSchema
+from http_load_balancer.core import TargetStatsManager
+from http_load_balancer.schemas import ConnectionSchema, TargetSchema, TargetStatsSchema
 
 class BaseAlgorithm(ABC):
     @classmethod
@@ -12,9 +10,9 @@ class BaseAlgorithm(ABC):
 
     @staticmethod
     def targets() -> list[TargetSchema]:
-        from http_load_balancer.core.kubernetes_manager import KubernetesManager
-        return KubernetesManager.targets()
+        from http_load_balancer.core import TargetManager
+        return TargetManager.targets()
 
     @staticmethod
     def target_stats(target_key: str) -> TargetStatsSchema:
-        return TargetManager.get_stats(target_key)
+        return TargetStatsManager.stats(target_key)

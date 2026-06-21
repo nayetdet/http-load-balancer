@@ -10,6 +10,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-http-load-balancer:
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      tag: latest
+      dockerfile: packages/http_load_balancer/Dockerfile
+
   build-sample-app:
     uses: ./.github/workflows/build.yml
     permissions:
@@ -20,7 +29,7 @@ jobs:
       dockerfile: packages/sample_app/Dockerfile
 
   postbuild:
-    needs: [build-sample-app]
+    needs: [build-http-load-balancer, build-sample-app]
     runs-on: ubuntu-latest
     permissions:
       packages: write
