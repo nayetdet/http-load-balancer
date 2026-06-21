@@ -21,6 +21,35 @@ class DockerProvider(BaseProvider):
         return targets
 
     @classmethod
+    def _internal_targets(cls, client: DockerClient) -> list[TargetSchema]:
+        from http_target_discovery.settings import settings
+
+        if settings.target_network_strategy is DiscoveryTargetNetworkStrategy.PUBLISHED:
+            return []
+
+        targets: list[TargetSchema] = []
+        for container in client.containers.list(filters={"label": settings.docker_target_label}):
+            internal_ip: str | None = next(
+                (
+                    network.get("IPAddress")
+                    for network in (container.attrs.get("NetworkSettings", {}).get("Networks") or {}).values()
+                    if network.get("IPAddress")
+                ),
+                None
+            )
+
+            internal_port: str | None = next(iter(container.attrs.get("Config", {}).get("ExposedPorts") or {}), None)
+            if internal_ip and internal_port:
+                targets.append(
+                    TargetSchema(
+                        ip=internal_ip,
+                        port=int(internal_port.split("/")[0])
+                    )
+                )
+
+        return targets
+
+    @classmethod
     def _published_targets(cls, client: DockerClient) -> list[TargetSchema]:
         from http_target_discovery.settings import settings
 
@@ -47,38 +76,5 @@ class DockerProvider(BaseProvider):
                 )
 
                 break
-
-        return targets
-
-    @classmethod
-    def _internal_targets(cls, client: DockerClient) -> list[TargetSchema]:
-        from http_target_discovery.settings import settings
-
-        if settings.target_network_strategy is DiscoveryTargetNetworkStrategy.PUBLISHED:
-            return []
-
-        targets: list[TargetSchema] = []
-        for container in client.containers.list(filters={"label": settings.docker_target_label}):
-            internal_ip: str | None = next(
-                (
-                    network.get("IPAddress")
-                    for network in (container.attrs.get("NetworkSettings", {}).get("Networks") or {}).values()
-                    if network.get("IPAddress")
-                ),
-                default=None
-            )
-
-            internal_port: str | None = next(
-                iter(container.attrs.get("Config", {}).get("ExposedPorts") or {}),
-                default=None
-            )
-
-            if internal_ip and internal_port:
-                targets.append(
-                    TargetSchema(
-                        ip=internal_ip,
-                        port=int(internal_port.split("/")[0])
-                    )
-                )
 
         return targets

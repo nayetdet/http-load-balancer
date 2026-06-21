@@ -1,6 +1,7 @@
 from kubernetes import client, config
 from kubernetes.config.config_exception import ConfigException
 from http_target_discovery.providers.base_provider import BaseProvider
+from http_target_discovery.enums.discovery_target_network_strategy import DiscoveryTargetNetworkStrategy
 from http_target_discovery.schemas.target_schema import TargetSchema
 
 try:
@@ -9,29 +10,116 @@ except ConfigException:
     config.load_kube_config()
 
 class KubernetesProvider(BaseProvider):
-    _core = client.CoreV1Api()
+    _apps: client.AppsV1Api = client.AppsV1Api()
+    _core: client.CoreV1Api = client.CoreV1Api()
 
     @classmethod
     def targets(cls) -> list[TargetSchema]:
         from http_target_discovery.settings import settings
 
-        pods = cls._core.list_namespaced_pod(
-            namespace=settings.kubernetes_namespace,
-            label_selector=f"app={settings.kubernetes_deployment_app_name}"
+        deployment: client.V1Deployment = cls._apps.read_namespaced_deployment(
+            name=settings.kubernetes_deployment_name,
+            namespace=settings.kubernetes_namespace
         )
 
-        targets: list[TargetSchema] = []
-        for pod in pods.items:
-            if pod.status.phase != "Running":
-                continue
+        replica_set_uids: set[str] = {
+            replica_set.metadata.uid
+            for replica_set in cls._apps.list_namespaced_replica_set(namespace=settings.kubernetes_namespace).items
+            if any(
+                owner.kind == "Deployment" and owner.uid == deployment.metadata.uid
+                for owner in replica_set.metadata.owner_references or []
+            )
+        }
 
-            ip: str = pod.status.pod_ip
-            if not ip:
-                continue
+        pods: client.V1PodList = cls._core.list_namespaced_pod(namespace=settings.kubernetes_namespace)
+        running_pods: list[client.V1Pod] = [
+            pod
+            for pod in pods.items
+            if pod.status.phase == "Running"
+            and any(
+                owner.kind == "ReplicaSet" and owner.uid in replica_set_uids
+                for owner in pod.metadata.owner_references or []
+            )
+        ]
 
-            port: int = pod.spec.containers[0].ports[0].container_port
-            targets.append(TargetSchema(ip=ip, port=port))
-
+        targets: list[TargetSchema] = cls._unique_targets(
+            cls._published_targets(running_pods) + cls._internal_targets(running_pods)
+        )
         if not targets:
             raise RuntimeError("No available targets")
+        return targets
+
+    @classmethod
+    def _unique_targets(cls, targets: list[TargetSchema]) -> list[TargetSchema]:
+        unique_targets: dict[str, TargetSchema] = {}
+        for target in targets:
+            unique_targets.setdefault(target.key(), target)
+        return list(unique_targets.values())
+
+    @classmethod
+    def _internal_targets(cls, pods: list[client.V1Pod]) -> list[TargetSchema]:
+        from http_target_discovery.settings import settings
+
+        if settings.target_network_strategy is DiscoveryTargetNetworkStrategy.PUBLISHED:
+            return []
+
+        targets: list[TargetSchema] = []
+        for pod in pods:
+            pod_ip: str | None = pod.status.pod_ip
+            if not pod_ip:
+                continue
+
+            for container in pod.spec.containers or []:
+                for port in container.ports or []:
+                    container_port: int | None = getattr(port, "container_port", None)
+                    if not container_port:
+                        continue
+
+                    targets.append(
+                        TargetSchema(
+                            ip=pod_ip,
+                            port=int(container_port)
+                        )
+                    )
+
+        return targets
+
+    @classmethod
+    def _published_targets(cls, pods: list[client.V1Pod]) -> list[TargetSchema]:
+        from http_target_discovery.settings import settings
+
+        if settings.target_network_strategy is DiscoveryTargetNetworkStrategy.INTERNAL:
+            return []
+
+        targets: list[TargetSchema] = []
+        for pod in pods:
+            host_ip: str | None = pod.status.host_ip
+            if not host_ip:
+                continue
+
+            host_network: bool = bool(getattr(pod.spec, "host_network", False))
+            for container in pod.spec.containers or []:
+                for port in container.ports or []:
+                    host_port: int | None = getattr(port, "host_port", None)
+                    container_port: int | None = getattr(port, "container_port", None)
+                    if host_port:
+                        targets.append(
+                            TargetSchema(
+                                ip=host_ip,
+                                port=int(host_port)
+                            )
+                        )
+
+                        continue
+
+                    if not host_network or not container_port:
+                        continue
+
+                    targets.append(
+                        TargetSchema(
+                            ip=host_ip,
+                            port=int(container_port)
+                        )
+                    )
+
         return targets

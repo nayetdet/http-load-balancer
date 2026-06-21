@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     docker_target_label: str = "http-load-balancer.target"
 
     # Kubernetes
+    kubernetes_deployment_name: str
     kubernetes_deployment_app_name: str
     kubernetes_namespace: str = "default"
 
