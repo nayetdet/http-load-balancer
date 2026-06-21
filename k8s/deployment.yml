@@ -12,6 +12,8 @@ spec:
       labels:
         app: dummy
     spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: dummy
           image: nginx:latest
