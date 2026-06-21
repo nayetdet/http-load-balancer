@@ -1,3 +1,4 @@
+import os
 import socket
 import threading
 import signal
@@ -49,6 +50,8 @@ def forward_request(client_socket: socket.socket, algorithm) -> None:
                 TargetStatsManager.decrement_connections(target.key)
 
 def main() -> None:
+    logger.info("PID: {}", os.getpid())
+
     TargetManager.reload()
     signal.signal(signal.SIGHUP, TargetManager.reload)
 
@@ -58,10 +61,11 @@ def main() -> None:
     server.listen(settings.backlog)
 
     logger.info("Proxy running on {}:{} with {}", settings.host, settings.port, TargetManager.algorithm().__name__)
+
     while True:
         client_socket, _ = server.accept()
         threading.Thread(
             target=forward_request,
             args=(client_socket, TargetManager.algorithm()),
-            daemon=True,
+            daemon=True
         ).start()
