@@ -4,10 +4,15 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        env_prefix="LB_",
+        env_prefix="DISCOVERY_",
         extra="ignore",
     )
 
+    # Docker
+    docker_target_label: str = "http-load-balancer.target"
+
     # Kubernetes
-    KUBERNETES_DEPLOYMENT_APP_NAME: str
-    KUBERNETES_NAMESPACE: str = "default"
+    kubernetes_deployment_app_name: str
+    kubernetes_namespace: str = "default"
+
+settings = Settings()
