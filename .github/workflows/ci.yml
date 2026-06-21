@@ -19,6 +19,15 @@ jobs:
       tag: latest
       dockerfile: packages/http_load_balancer/Dockerfile
 
+  build-http-target-discovery:
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      tag: http-target-discovery
+      dockerfile: packages/http_target_discovery/Dockerfile
+
   build-sample-app:
     uses: ./.github/workflows/build.yml
     permissions:
