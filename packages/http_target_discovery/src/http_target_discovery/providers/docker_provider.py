@@ -29,6 +29,11 @@ class DockerProvider(BaseProvider):
 
         targets: set[TargetSchema] = set()
         for container in client.containers.list(filters={"label": settings.docker_target_label}):
+            state: dict = container.attrs.get("State", {})
+            health: dict | None = state.get("Health")
+            if state.get("Status") != "running" or health is None or health.get("Status") != "healthy":
+                continue
+
             internal_ip: str | None = next(
                 (
                     network.get("IPAddress")
@@ -58,6 +63,11 @@ class DockerProvider(BaseProvider):
 
         targets: set[TargetSchema] = set()
         for container in client.containers.list(filters={"label": settings.docker_target_label}):
+            state: dict = container.attrs.get("State", {})
+            health: dict | None = state.get("Health")
+            if state.get("Status") != "running" or health is None or health.get("Status") != "healthy":
+                continue
+
             for port_bindings in (container.attrs.get("NetworkSettings", {}).get("Ports") or {}).values():
                 if not port_bindings:
                     continue
