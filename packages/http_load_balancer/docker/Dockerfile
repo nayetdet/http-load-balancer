@@ -26,6 +26,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/packages/"$PACKAGE"/src /app/packages/"$PACKAGE"/src
+COPY packages/http_load_balancer/docker/scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 8080 9090
-ENTRYPOINT ["/bin/sh", "-c", "ulimit -n 4096 && exec /app/.venv/bin/python -m http_load_balancer"]
+ENTRYPOINT ["/entrypoint.sh"]

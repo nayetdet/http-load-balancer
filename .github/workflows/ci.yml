@@ -17,7 +17,7 @@ jobs:
       packages: write
     with:
       tag: latest
-      dockerfile: packages/http_load_balancer/Dockerfile
+      dockerfile: packages/http_load_balancer/docker/Dockerfile
 
   build-http-target-discovery:
     uses: ./.github/workflows/build.yml
@@ -26,7 +26,7 @@ jobs:
       packages: write
     with:
       tag: http-target-discovery
-      dockerfile: packages/http_target_discovery/Dockerfile
+      dockerfile: packages/http_target_discovery/docker/Dockerfile
 
   build-sample-app:
     uses: ./.github/workflows/build.yml
@@ -35,4 +35,4 @@ jobs:
       packages: write
     with:
       tag: sample-app
-      dockerfile: packages/sample_app/Dockerfile
+      dockerfile: packages/sample_app/docker/Dockerfile

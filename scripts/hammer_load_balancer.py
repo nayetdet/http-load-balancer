@@ -10,11 +10,11 @@ from http.client import HTTPConnection
 from urllib.parse import urlparse
 
 URL: str = "http://127.0.0.1:30080"
-HOST: str = urlparse(URL).hostname or "127.0.0.1"
-PORT: int = urlparse(URL).port or 80
+HOST: str = urlparse(URL).hostname
+PORT: int = urlparse(URL).port
 PATH: str = "/"
-CONCURRENCY: int = 3
-DURATION_SECONDS: float = 60
+CONCURRENCY: int = 64
+DURATION_SECONDS: float = 120
 TIMEOUT_SECONDS: float = 5
 REQUEST_DELAY_SECONDS: float = 0.05
 
@@ -22,15 +22,11 @@ def worker(stop: threading.Event, lock: threading.Lock, stats: Counter[str]) -> 
     while not stop.is_set():
         conn = HTTPConnection(HOST, PORT, timeout=TIMEOUT_SECONDS)
         try:
-            print(f"[send] GET {PATH}", flush=True)
             conn.request("GET", PATH, headers={"Connection": "close"})
-            res = conn.getresponse()
-            res.read()
-            print(f"[ok] {res.status}", flush=True)
+            conn.getresponse().read()
             with lock:
                 stats["ok"] += 1
         except Exception as e:
-            print(f"[err] {type(e).__name__}", flush=True)
             with lock:
                 stats[type(e).__name__] += 1
             time.sleep(0.05)
@@ -44,12 +40,11 @@ def main() -> None:
     stats: Counter[str] = Counter()
 
     def stop_now(*_: object) -> None:
-        print("\n[stop] stopping...", flush=True)
         stop.set()
 
     signal.signal(signal.SIGINT, stop_now)
     signal.signal(signal.SIGTERM, stop_now)
-    print(f"[run] {URL}{PATH} x{CONCURRENCY} for {DURATION_SECONDS}s ({REQUEST_DELAY_SECONDS}s pause)", flush=True)
+    print(f"Start load test -> {URL}{PATH} | workers={CONCURRENCY} | duration={DURATION_SECONDS}s", flush=True)
 
     with ThreadPoolExecutor(CONCURRENCY) as pool:
         for _ in range(CONCURRENCY):
@@ -63,9 +58,9 @@ def main() -> None:
 
     ok: int = stats.pop("ok", 0)
     errors: int = sum(stats.values())
-    print(f"[done] ok={ok} errors={errors}", flush=True)
+    print(f"Done: requests={ok} failures={errors}", flush=True)
     if errors:
-        print("[errors] " + ", ".join(f"{name}:{count}" for name, count in sorted(stats.items())), flush=True)
+        print("Failures: " + ", ".join(f"{name}={count}" for name, count in sorted(stats.items())), flush=True)
 
 if __name__ == "__main__":
     main()
