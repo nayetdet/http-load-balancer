@@ -1,3 +1,5 @@
+import os
+import signal
 from loguru import logger
 from http_load_balancer.core.target_manager import TargetManager
 from http_load_balancer.servers.internal_server import InternalServer
@@ -5,7 +7,10 @@ from http_load_balancer.servers.proxy_server import ProxyServer
 from http_load_balancer.settings import settings
 
 def main() -> None:
+    logger.info("PID: {}", os.getpid())
     TargetManager.reload()
+    signal.signal(signal.SIGHUP, TargetManager.reload)
+
     proxy_server = ProxyServer()
     internal_server = InternalServer()
 

@@ -31,20 +31,27 @@ class TargetManager:
             return cls._algorithm_strategy.algorithm
 
     @classmethod
-    def reload(cls, payload: TargetSettingsSchema | None = None) -> None:
+    def reload(cls, payload: TargetSettingsSchema | None = None, *_: object) -> None:
         try:
             from http_load_balancer.schemas.target_settings_schema import TargetSettingsSchema
-            if payload is None:
-                target_settings: TargetSettingsSchema = TargetSettingsSchema.model_validate(yaml.safe_load(settings.settings_file_path.read_text(encoding="utf-8")) or {})
-            else:
-                target_settings = payload
+            target_settings = TargetSettingsSchema.model_validate(yaml.safe_load(settings.settings_file_path.read_text(encoding="utf-8")) or {})
+            if isinstance(payload, TargetSettingsSchema):
+                target_settings = target_settings.model_copy(
+                    update={
+                        key: getattr(payload, key)
+                        for key in ("version", "algorithm_strategy", "targets")
+                        if key in payload.model_fields_set
+                    }
+                )
 
-            targets: set[TargetSchema] = {target.model_copy(deep=True) for target in target_settings.targets}
-            algorithm_strategy = target_settings.algorithm_strategy
+                settings.settings_file_path.write_text(
+                    yaml.safe_dump(target_settings.model_dump(mode="json"), sort_keys=False),
+                    encoding="utf-8",
+                )
 
             with cls._lock:
-                cls._targets = {target.model_copy(deep=True) for target in targets}
-                cls._algorithm_strategy = algorithm_strategy
+                cls._targets = {target.model_copy(deep=True) for target in target_settings.targets}
+                cls._algorithm_strategy = target_settings.algorithm_strategy
                 TargetStatsManager.reload()
         except Exception:
             logger.exception("Failed to reload target settings payload")
