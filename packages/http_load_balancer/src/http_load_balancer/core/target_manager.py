@@ -15,8 +15,9 @@ if TYPE_CHECKING:
 
 class TargetManager:
     _lock = Lock()
-    _targets: set[TargetSchema] = set()
+    _version: int = 1
     _algorithm_strategy: AlgorithmStrategy | None = None
+    _targets: set[TargetSchema] = set()
 
     @classmethod
     def targets(cls) -> set[TargetSchema]:
@@ -50,6 +51,7 @@ class TargetManager:
                 )
 
             with cls._lock:
+                cls._version = target_settings.version
                 cls._targets = {target.model_copy(deep=True) for target in target_settings.targets}
                 cls._algorithm_strategy = target_settings.algorithm_strategy
                 TargetStatsManager.reload()

@@ -2,8 +2,13 @@ from http import HTTPStatus
 
 class HTTPUtils:
     @staticmethod
-    def empty_response(status: HTTPStatus) -> bytes:
-        return f"HTTP/1.1 {status.value} {status.phrase}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".encode()
+    def response(status: HTTPStatus, body: bytes = b"", headers: dict[str, str] | None = None) -> bytes:
+        return (
+            f"HTTP/1.1 {status.value} {status.phrase}\r\n"
+            f"{''.join(f'{key}: {value}\r\n' for key, value in headers.items()) if headers is not None else ''}"
+            f"Content-Length: {len(body)}\r\n"
+            "Connection: close\r\n\r\n"
+        ).encode("utf-8") + body
 
     @staticmethod
     def body(request: bytes) -> bytes:
@@ -18,12 +23,11 @@ class HTTPUtils:
             if not line.lower().startswith(b"content-length:"):
                 continue
 
-            _, raw_value = line.split(b":", 1)
+            _, value = line.split(b":", 1)
             try:
-                return int(raw_value.strip())
+                return int(value.strip())
             except ValueError:
                 return 0
-
         return 0
 
     @staticmethod
