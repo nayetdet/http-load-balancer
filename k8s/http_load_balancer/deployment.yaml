@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: http-load-balancer
-          image: ghcr.io/nayetdet/http-load-balancer-from-scratch:latest
+          image: ghcr.io/nayetdet/http-load-balancer:latest
+          imagePullPolicy: Always
           env:
             - name: LB_PROXY_HOST
               value: 0.0.0.0

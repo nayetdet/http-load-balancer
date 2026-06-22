@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: sample-app
-          image: ghcr.io/nayetdet/http-load-balancer-from-scratch:sample-app
+          image: ghcr.io/nayetdet/http-load-balancer:sample-app
+          imagePullPolicy: Always
           resources:
             requests:
               cpu: 100m

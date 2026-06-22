@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: http-target-discovery
-          image: ghcr.io/nayetdet/http-load-balancer-from-scratch:http-target-discovery
+          image: ghcr.io/nayetdet/http-load-balancer:http-target-discovery
+          imagePullPolicy: Always
           env:
             - name: DISCOVERY_PROVIDER_STRATEGY
               value: kubernetes
