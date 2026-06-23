@@ -19,7 +19,7 @@ def info():
 
 @app.route("/info/delay")
 def info_delay():
-    time.sleep(1)
+    time.sleep(10)
     return {
         "instance_id": str(instance_id),
         "background_color": background_color,
