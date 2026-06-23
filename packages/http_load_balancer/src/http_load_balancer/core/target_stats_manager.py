@@ -7,6 +7,14 @@ class TargetStatsManager:
     _stats: defaultdict[str, TargetStatsSchema] = defaultdict(TargetStatsSchema)
 
     @classmethod
+    def all_stats(cls) -> dict[str, TargetStatsSchema]:
+        with cls._lock:
+            return {
+                target_key: stats.model_copy(deep=True)
+                for target_key, stats in cls._stats.items()
+            }
+
+    @classmethod
     def stats(cls, target_key: str) -> TargetStatsSchema:
         with cls._lock:
             return cls._stats.get(target_key, TargetStatsSchema()).model_copy(deep=True)
@@ -28,6 +36,12 @@ class TargetStatsManager:
             cls._stats[target_key].response_time = response_time
 
     @classmethod
-    def reload(cls) -> None:
+    def update(cls, stats: dict[str, TargetStatsSchema] | None = None) -> None:
         with cls._lock:
-            cls._stats = defaultdict(TargetStatsSchema)
+            cls._stats = defaultdict(
+                TargetStatsSchema,
+                {
+                    target_key: target_stats.model_copy(deep=True)
+                    for target_key, target_stats in (stats or {}).items()
+                }
+            )

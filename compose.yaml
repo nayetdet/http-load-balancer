@@ -4,6 +4,8 @@ services:
     pull_policy: always
     labels:
       http-load-balancer.target: "true"
+    cpus: "0.50"
+    mem_limit: 256m
     deploy:
       replicas: 3
     ports:
