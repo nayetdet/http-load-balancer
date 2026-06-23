@@ -8,6 +8,14 @@ app = Flask(__name__, template_folder=str(settings.resources_templates_path))
 def health():
     return "", 204
 
+@app.route("/info")
+def info():
+    return {
+        "instance_id": str(instance_id),
+        "background_color": background_color,
+        "started_at": started_at.astimezone().isoformat()
+    }
+
 @app.route("/")
 def index():
     return render_template(
