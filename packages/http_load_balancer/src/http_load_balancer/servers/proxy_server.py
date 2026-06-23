@@ -10,6 +10,7 @@ from http_load_balancer.servers.handlers.http_handler import http_handler
 from http_load_balancer.algorithms.base_algorithm import BaseAlgorithm
 from http_load_balancer.core.target_manager import TargetManager
 from http_load_balancer.core.target_stats_manager import TargetStatsManager
+from http_load_balancer.enums.algorithm_strategy import AlgorithmStrategy
 from http_load_balancer.schemas.connection_schema import ConnectionSchema
 from http_load_balancer.schemas.target_schema import TargetSchema
 from http_load_balancer.settings import settings
@@ -41,7 +42,8 @@ class ProxyServer(BaseServer):
                 client_socket.sendall(HTTPUtils.response(HTTPStatus.SERVICE_UNAVAILABLE))
                 return
 
-            algorithm: type[BaseAlgorithm] = TargetManager.algorithm()
+            algorithm_strategy: AlgorithmStrategy = TargetManager.algorithm_strategy()
+            algorithm: type[BaseAlgorithm] = algorithm_strategy.algorithm
             connection: ConnectionSchema = ConnectionSchema.model_validate(dict(zip(ConnectionSchema.model_fields, client_socket.getpeername())))
 
             try:
@@ -55,6 +57,9 @@ class ProxyServer(BaseServer):
 
         started_at: float = time.perf_counter()
         logger.info("Forwarding request to {}:{} via {}", target.ip, target.port, algorithm.__name__)
+        if algorithm_strategy == AlgorithmStrategy.LEAST_CONNECTIONS:
+            logger.info("Target {}:{} now has {} connections", target.ip, target.port, TargetStatsManager.stats(target.key()).connections)
+
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as remote_socket:
             try:
                 remote_socket.connect((target.ip, target.port))
@@ -74,3 +79,5 @@ class ProxyServer(BaseServer):
                 TargetStatsManager.update_response_time(target_key=target.key(), response_time=time.perf_counter() - started_at,)
             finally:
                 TargetStatsManager.decrement_connections(target.key())
+                if algorithm_strategy == AlgorithmStrategy.LEAST_CONNECTIONS:
+                    logger.info("Target {}:{} now has {} connections", target.ip, target.port, TargetStatsManager.stats(target.key()).connections)

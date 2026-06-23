@@ -22,7 +22,7 @@ def index():
         "index.html",
         instance_id=str(instance_id),
         background_color=background_color,
-        started_at=started_at.astimezone().strftime(format="%d/%m/%Y %H:%M:%S")
+        started_at=started_at.astimezone().isoformat()
     )
 
 def main():
