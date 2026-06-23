@@ -13,7 +13,7 @@ def main() -> None:
         "Watching {} targets every {}s and reloading {}",
         settings.provider_strategy.label,
         settings.poll_interval_seconds,
-        settings.lb_reload_url
+        settings.lb_targets_url
     )
 
     provider: type[BaseProvider] = settings.provider_strategy.provider

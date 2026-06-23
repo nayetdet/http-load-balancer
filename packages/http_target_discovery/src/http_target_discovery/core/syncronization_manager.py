@@ -6,7 +6,7 @@ from requests import Response
 from pydantic import ValidationError
 from http_target_discovery.providers.base_provider import BaseProvider
 from http_target_discovery.schemas.target_schema import TargetSchema
-from http_target_discovery.schemas.target_settings_schema import TargetSettingsSchema
+from http_target_discovery.schemas.routing_schema import RoutingSchema
 from http_target_discovery.settings import settings
 
 class SynchronizationManager:
@@ -30,27 +30,27 @@ class SynchronizationManager:
             logger.exception("Failed to discover targets")
             return
 
-        target_settings: TargetSettingsSchema = TargetSettingsSchema()
+        routing: RoutingSchema = RoutingSchema()
         try:
-            settings_response: Response = session.get(settings.lb_settings_url, timeout=settings.request_timeout_seconds)
-            settings_response.raise_for_status()
-            target_settings = TargetSettingsSchema.model_validate(settings_response.json())
+            routing_response: Response = session.get(settings.lb_targets_url, timeout=settings.request_timeout_seconds)
+            routing_response.raise_for_status()
+            routing = RoutingSchema.model_validate(routing_response.json())
         except (requests.RequestException, OSError, ValidationError):
-            logger.exception("Failed to fetch current load balancer settings")
+            logger.exception("Failed to fetch current routing payload")
 
-        target_weights_by_key: dict[str, int] = {target.key(): target.weight for target in target_settings.targets}
+        target_weights_by_key: dict[str, int] = {target.key(): target.weight for target in routing.targets}
         targets: list[TargetSchema] = [
             target.model_copy(update={"weight": target_weights_by_key.get(target.key(), target.weight)})
             for target in provider_targets
         ]
 
-        if target_settings.targets and not any(target.key() in target_weights_by_key for target in provider_targets):
+        if routing.targets and not any(target.key() in target_weights_by_key for target in provider_targets):
             targets = [
                 target.model_copy(
                     update={
                         "weight": (
-                            target_settings.targets[target_index].weight
-                            if target_index < len(target_settings.targets)
+                            routing.targets[target_index].weight
+                            if target_index < len(routing.targets)
                             else target.weight
                         )
                     }
@@ -64,9 +64,9 @@ class SynchronizationManager:
 
         if targets_snapshot != cls._last_sent:
             try:
-                reload_response: Response = session.post(
-                    url=settings.lb_reload_url,
-                    json=target_settings.model_copy(update={"targets": targets}).model_dump(mode="json"),
+                reload_response: Response = session.put(
+                    url=settings.lb_targets_url,
+                    json=routing.model_copy(update={"targets": targets}).model_dump(mode="json"),
                     timeout=settings.request_timeout_seconds
                 )
 

@@ -33,7 +33,7 @@ class ProxyServer(BaseServer):
         )
 
     @http_handler()
-    def handle_proxy_request(self, client_socket: socket.socket, request: bytes) -> None:
+    def proxy(self, client_socket: socket.socket, request: bytes) -> None:
         with _selection_lock:
             targets: list[TargetSchema] = list(TargetManager.targets())
             if not targets:

@@ -22,14 +22,14 @@ class Settings(BaseSettings):
     # Paths
     root_path: Path = Path(__file__).resolve().parents[2]
     settings_path: Path = root_path / "settings"
-    settings_file_path: Path = settings_path / "targets.yaml"
+    settings_file_path: Path = settings_path / "routing.yaml"
 
     @model_validator(mode="after")
     def setup_paths(self) -> Self:
         self.settings_path.mkdir(parents=True, exist_ok=True)
         if not self.settings_file_path.exists():
-            from http_load_balancer.schemas.target_settings_schema import TargetSettingsSchema
-            self.settings_file_path.write_text(yaml.safe_dump(TargetSettingsSchema().model_dump(mode="json"), sort_keys=False), encoding="utf-8")
+            from http_load_balancer.schemas.routing_schema import RoutingSchema
+            self.settings_file_path.write_text(yaml.safe_dump(RoutingSchema().model_dump(mode="json"), sort_keys=False), encoding="utf-8")
         return self
 
 settings = Settings()

@@ -10,7 +10,7 @@ from http_load_balancer.schemas.target_schema import TargetSchema
 
 if TYPE_CHECKING:
     from http_load_balancer.enums.algorithm_strategy import AlgorithmStrategy
-    from http_load_balancer.schemas.target_settings_schema import TargetSettingsSchema
+    from http_load_balancer.schemas.routing_schema import RoutingSchema
 
 class TargetManager:
     _lock = Lock()
@@ -24,20 +24,25 @@ class TargetManager:
             return {target.model_copy(deep=True) for target in cls._targets}
 
     @classmethod
-    def algorithm(cls) -> type[BaseAlgorithm]:
+    def algorithm_strategy(cls) -> AlgorithmStrategy:
         with cls._lock:
             if cls._algorithm_strategy is None:
-                raise RuntimeError("TargetManager.reload() must run before algorithm lookup")
-            return cls._algorithm_strategy.algorithm
+                raise RuntimeError("TargetManager.reload() must run before algorithm strategy lookup")
+            return cls._algorithm_strategy
 
     @classmethod
-    def reload(cls, payload: TargetSettingsSchema | None = None, *_: object) -> None:
+    def algorithm(cls) -> type[BaseAlgorithm]:
+        return cls.algorithm_strategy().algorithm
+
+    @classmethod
+    def reload(cls, payload: RoutingSchema | None = None, *_: object) -> None:
         try:
             from http_load_balancer.settings import settings
-            from http_load_balancer.schemas.target_settings_schema import TargetSettingsSchema
-            target_settings = TargetSettingsSchema.model_validate(yaml.safe_load(settings.settings_file_path.read_text(encoding="utf-8")) or {})
-            if isinstance(payload, TargetSettingsSchema):
-                target_settings = target_settings.model_copy(
+            from http_load_balancer.schemas.routing_schema import RoutingSchema
+
+            routing = RoutingSchema.model_validate(yaml.safe_load(settings.settings_file_path.read_text(encoding="utf-8")) or {})
+            if isinstance(payload, RoutingSchema):
+                routing = routing.model_copy(
                     update={
                         key: getattr(payload, key)
                         for key in ("version", "algorithm_strategy", "targets")
@@ -46,16 +51,16 @@ class TargetManager:
                 )
 
                 settings.settings_file_path.write_text(
-                    yaml.safe_dump(target_settings.model_dump(mode="json"), sort_keys=False),
+                    yaml.safe_dump(routing.model_dump(mode="json"), sort_keys=False),
                     encoding="utf-8"
                 )
 
             with cls._lock:
-                cls._version = target_settings.version
-                cls._targets = {target.model_copy(deep=True) for target in target_settings.targets}
-                cls._algorithm_strategy = target_settings.algorithm_strategy
+                cls._version = routing.version
+                cls._targets = {target.model_copy(deep=True) for target in routing.targets}
+                cls._algorithm_strategy = routing.algorithm_strategy
                 TargetStatsManager.reload()
         except Exception:
-            logger.exception("Failed to reload target settings payload")
+            logger.exception("Failed to reload routing payload")
         else:
-            logger.info("Target settings payload reloaded")
+            logger.info("Routing payload reloaded")

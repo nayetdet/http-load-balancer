@@ -17,8 +17,7 @@ class Settings(BaseSettings):
     request_timeout_seconds: float = 5
 
     # Load Balancer
-    lb_settings_url: str
-    lb_reload_url: str
+    lb_targets_url: str
 
     # Docker
     docker_target_label: str = "http-load-balancer.target"
