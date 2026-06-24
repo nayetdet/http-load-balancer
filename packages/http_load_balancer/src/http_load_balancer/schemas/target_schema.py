@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
 class TargetSchema(BaseModel):
     ip: str
-    port: int
+    port: int = Field(validation_alias=AliasChoices("port", "target"), serialization_alias="port")
     weight: int = Field(default=1, ge=1)
 
     def __hash__(self) -> int:
