@@ -4,35 +4,51 @@ from http_target_discovery.providers.base_provider import BaseProvider
 from http_target_discovery.enums.network_strategy import NetworkStrategy
 from http_target_discovery.schemas.target_schema import TargetSchema
 
-def load_kubernetes() -> None:
-    try:
-        config.load_incluster_config()
-    except ConfigException:
-        config.load_kube_config()
-
 class KubernetesProvider(BaseProvider):
-    _apps: client.AppsV1Api = client.AppsV1Api()
-    _core: client.CoreV1Api = client.CoreV1Api()
+    _apps: client.AppsV1Api | None = None
+    _core: client.CoreV1Api | None = None
+
+    @classmethod
+    def setup_kubernetes(cls) -> None:
+        try:
+            config.load_incluster_config()
+        except ConfigException:
+            config.load_kube_config()
+
+        cls._apps = client.AppsV1Api()
+        cls._core = client.CoreV1Api()
+
+    @classmethod
+    def apps(cls) -> client.AppsV1Api:
+        if cls._apps is None:
+            cls.setup_kubernetes()
+        return cls._apps
+
+    @classmethod
+    def core(cls) -> client.CoreV1Api:
+        if cls._core is None:
+            cls.setup_kubernetes()
+        return cls._core
 
     @classmethod
     def targets(cls) -> set[TargetSchema]:
         from http_target_discovery.settings import settings
 
-        deployment: client.V1Deployment = cls._apps.read_namespaced_deployment(
+        deployment: client.V1Deployment = cls.apps().read_namespaced_deployment(
             name=settings.kubernetes_deployment_name,
             namespace=settings.kubernetes_namespace
         )
 
         replica_set_uids: set[str] = {
             replica_set.metadata.uid
-            for replica_set in cls._apps.list_namespaced_replica_set(namespace=settings.kubernetes_namespace).items
+            for replica_set in cls.apps().list_namespaced_replica_set(namespace=settings.kubernetes_namespace).items
             if any(
                 owner.kind == "Deployment" and owner.uid == deployment.metadata.uid
                 for owner in replica_set.metadata.owner_references or []
             )
         }
 
-        pods: client.V1PodList = cls._core.list_namespaced_pod(namespace=settings.kubernetes_namespace)
+        pods: client.V1PodList = cls.core().list_namespaced_pod(namespace=settings.kubernetes_namespace)
         running_pods: list[client.V1Pod] = [
             pod
             for pod in pods.items
