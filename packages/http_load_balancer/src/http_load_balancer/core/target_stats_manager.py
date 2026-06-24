@@ -1,6 +1,7 @@
 from collections import defaultdict
 from threading import Lock
 from http_load_balancer.schemas.target_stats_schema import TargetStatsSchema
+from http_load_balancer.settings import settings
 
 class TargetStatsManager:
     _lock = Lock()
@@ -33,7 +34,12 @@ class TargetStatsManager:
     @classmethod
     def update_response_time(cls, target_key: str, response_time: float) -> None:
         with cls._lock:
-            cls._stats[target_key].response_time = response_time
+            stats: TargetStatsSchema = cls._stats[target_key]
+            stats.response_time = (
+                response_time
+                if stats.response_time <= 0
+                else stats.response_time * (1 - settings.response_time_alpha) + response_time * settings.response_time_alpha
+            )
 
     @classmethod
     def update(cls, stats: dict[str, TargetStatsSchema] | None = None) -> None:

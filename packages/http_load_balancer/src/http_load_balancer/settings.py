@@ -12,12 +12,15 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
-    # Servers
+    # Network
     host: str = "0.0.0.0"
     proxy_port: int = 8080
     internal_port: int = 9090
     buffer_size: int = 4096
     backlog: int = 128
+
+    # Stats
+    response_time_alpha: float = 0.2
 
     # Paths
     root_path: Path = Path(__file__).resolve().parents[2]

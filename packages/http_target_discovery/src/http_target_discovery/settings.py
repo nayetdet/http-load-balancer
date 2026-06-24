@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     provider_strategy: ProviderStrategy = ProviderStrategy.DOCKER
     network_strategy: NetworkStrategy = NetworkStrategy.PUBLISHED
     poll_interval_seconds: float = 5
+
+    # HTTP
     request_timeout_seconds: float = 5
 
     # Load Balancer
